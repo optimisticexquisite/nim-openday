@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nim Game</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    flex-direction: column;
+    background-color: rgb(179, 239, 239);
+  }
+  .stack {
+    margin: 10px;
+    padding: 10px;
+    border: 1px solid #000;
+    display: inline-block;
+  }
+  .coin {
+    height: 20px;
+    width: 20px;
+    background-color: gold;
+    border-radius: 50%;
+    display: inline-block;
+    margin: 2px;
+  }
+  button {
+    margin: 10px;
+    padding: 5px 10px;
+    cursor: pointer;
+  }
+  #setupForm {
+    margin-bottom: 20px;
+  }
+</style>
+</head>
+<body>
+    <center><img src="https://iisc.ac.in/wp-content/uploads/2020/08/IISc_Master_Seal_Black_Transparent.png" alt="IISc Logo" width="212.1225" height="150"></center>
+        <h1>Welcome to the Department of Mathematics, IISc</h1></center>
+    <center><h2>Nim Game</h2></center>
+    <center><h3>Presented by: Akash Sudhanshu, Rahul Adhikari, Shreya Mukherjee and Snehasish Ghosh</h3></center>
+    
+<div id="setupForm">
+  <input type="number" id="stack1" placeholder="Stack 1 Coins" min="1">
+  <input type="number" id="stack2" placeholder="Stack 2 Coins" min="1">
+  <input type="number" id="stack3" placeholder="Stack 3 Coins" min="1">
+  <button onclick="setupGame()">Setup Game</button>
+</div>
+
+<div id="gameArea" style="display:none;">
+ <center> <div id="stacks"></div><br>
+  <input type="number" id="removeCount" placeholder="Coins to remove" min="1" /><br>
+  <button onclick="playerMove()">Remove Coins</button><br>
+  <button onclick="resetGame()">Reset Game</button><br>
+  <p id="message"></p></center>
+</div>
+
+<script>
+let stacks = []; // Initial stack setup will be determined by user input
+let currentPlayer = 'Player';
+
+function setupGame() {
+  const stack1 = parseInt(document.getElementById('stack1').value) || 3; // Default to 3 if no input
+  const stack2 = parseInt(document.getElementById('stack2').value) || 4; // Default to 4 if no input
+  const stack3 = parseInt(document.getElementById('stack3').value) || 5; // Default to 5 if no input
+  stacks = [stack1, stack2, stack3];
+  document.getElementById('setupForm').style.display = 'none';
+  document.getElementById('gameArea').style.display = 'block';
+  displayStacks();
+}
+
+function displayStacks() {
+  const stacksContainer = document.getElementById('stacks');
+  stacksContainer.innerHTML = '';
+  stacks.forEach((stack, index) => {
+    const stackDiv = document.createElement('div');
+    stackDiv.classList.add('stack');
+    stackDiv.dataset.stackIndex = index;
+    for (let i = 0; i < stack; i++) {
+      const coin = document.createElement('div');
+      coin.classList.add('coin');
+      stackDiv.appendChild(coin);
+    }
+    stackDiv.addEventListener('click', function() {
+      selectStack(index);
+    });
+    stacksContainer.appendChild(stackDiv);
+  });
+}
+
+let selectedStackIndex = -1;
+
+function selectStack(index) {
+  if (currentPlayer !== 'Player') return;
+  selectedStackIndex = index;
+  showMessage(`Selected stack: ${index + 1}`);
+}
+
+function playerMove() {
+  if (selectedStackIndex === -1) {
+    showMessage("Please select a stack first.");
+    return;
+  }
+  const removeCount = parseInt(document.getElementById('removeCount').value);
+  if (isNaN(removeCount) || removeCount <= 0) {
+    showMessage("Invalid number of coins.");
+    return;
+  }
+  if (removeCount > stacks[selectedStackIndex]) {
+    showMessage("Cannot remove more coins than are in the stack.");
+    return;
+  }
+  stacks[selectedStackIndex] -= removeCount;
+  checkForWin();
+  currentPlayer = 'Computer';
+  displayStacks();
+  computerMove();
+}
+
+async function computerMove() {
+  if (currentPlayer !== 'Computer') return;
+
+  // Example API endpoint - replace with your actual endpoint
+  const apiUrl = '/api/next-move';
+
+  try {
+    // Send the current state of the stacks to the API
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ stacks }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+
+    // Assuming the API returns an object like { stackIndex: 1, coinsToRemove: 2 }
+    const data = await response.json();
+
+    // Validate response data
+    if (typeof data.stackIndex === 'undefined' || typeof data.coinsToRemove === 'undefined') {
+      throw new Error('Invalid response data');
+    }
+
+    // Update the stacks based on the API's response
+    stacks[data.stackIndex] = Math.max(0, stacks[data.stackIndex] - data.coinsToRemove);
+    showMessage("Computer's move: Removed " + data.coinsToRemove + " coins from stack " + (data.stackIndex + 1));
+
+    checkForWin(); // Check if the game has ended
+    currentPlayer = 'Player';
+    displayStacks(); // Update the display
+  } catch (error) {
+    console.error('Error:', error);
+    showMessage("An error occurred during the computer's move.");
+  }
+}
+
+
+function checkForWin() {
+  if (stacks.every(stack => stack === 0)) {
+    showMessage(`${currentPlayer} wins!`);
+    currentPlayer = '';
+    // document.getElementById('gameArea').style.display = 'none'; // Hide game area after win
+  }
+}
+
+function showMessage(message) {
+  document.getElementById('message').textContent = message;
+}
+
+function resetGame() {
+  stacks = [3, 4, 5]; // Reset to default or add setup again
+  document.getElementById('setupForm').style.display = 'block';
+  document.getElementById('gameArea').style.display = 'none';
+  showMessage('');
+}
+
+// Initially, display the stacks if you want to start with default values
+// displayStacks();
+</script>
+</body>
+</html>
