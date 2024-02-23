@@ -72,6 +72,12 @@ if __name__ == "__main__":
             revertcount = 0
             last_piles.append(piles.copy())
             pile, coins = map(int, inputval.split())
+            if coins > piles[pile-1]:
+                print("Invalid move! Try again")
+                continue
+            if coins == 0:
+                print("Invalid move! Try again")
+                continue
             piles[pile-1] -= coins
             print("The piles are:")
             print(piles)
