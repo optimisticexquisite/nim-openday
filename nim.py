@@ -1,7 +1,6 @@
 # Implementation of the game Nim (Open Sourced on GitHub - Snehasish Ghosh(optimisticexquisite))
 # This is a demonstration for IISc Open Day 2024 - Department of Mathematics
 
-# from nim_q import NimQLearning
 def nim_sum(piles):
     xor = 0
     for pile in piles:
@@ -21,15 +20,15 @@ def next_move(piles):
         nim = bin(nim)[2:].zfill(max_len)
         for i in range(len(binary)):
             if int(binary[i], 2) ^ int(nim, 2) < int(binary[i], 2):
-                return (int(binary[i], 2) ^ int(nim, 2), i)
+                piles[i] = int(binary[i], 2) ^ int(nim, 2)
                 break
-        #print(f"Computer removes {int(binary[i], 2) - piles[i]} coins from pile {i+1}")
+        print(f"Computer removes {int(binary[i], 2) - piles[i]} coins from pile {i+1}")
     else:
         # Remove one coin from the largest pile
         max_pile = max(piles)
         for i in range(len(piles)):
             if piles[i] == max_pile:
-                return (1, i)
+                piles[i] -= 1
                 print(f"Computer removes 1 coin from pile {i+1}")
                 break
 
@@ -87,9 +86,6 @@ if __name__ == "__main__":
                 break
             print("Computer's move")
             next_move(piles)
-            coins, pile = next_move(piles)
-            piles[pile] -= coins
-            print(f"Computer removes {coins} coins from pile {pile+1}")
             print("The piles are:")
             print(piles)
             if sum(piles) == 0:
